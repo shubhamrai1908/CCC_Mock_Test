@@ -5,30 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CCC Mock Test Simulator</title>
 <style>
-:root{--bg:#f3f5f9;--card:#fff;--ink:#1c2535;--mute:#5d6a80;--line:#d8deea;--accent:#2f4bb8;--ok:#1b7f4b;--okbg:#e4f5ec;--bad:#b3261e;--badbg:#fbe9e7}
-@media (prefers-color-scheme:dark){:root{--bg:#141a26;--card:#1e2638;--ink:#e8ecf5;--mute:#9aa6bd;--line:#33405a;--accent:#8ea2f0;--ok:#5fd394;--okbg:#17352a;--bad:#ff8a80;--badbg:#3a1f20}}
+:root{color-scheme:light dark;--bg:#f3f5f9;--card:#fff;--ink:#1c2535;--mute:#5d6a80;--line:#d8deea;--accent:#2f4bb8;--accent-soft:#e9edff;--ok:#1b7f4b;--okbg:#e4f5ec;--bad:#b3261e;--badbg:#fbe9e7;--shadow:0 8px 24px rgba(28,37,53,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#141a26;--card:#1e2638;--ink:#e8ecf5;--mute:#9aa6bd;--line:#33405a;--accent:#8ea2f0;--accent-soft:#2a3455;--ok:#5fd394;--okbg:#17352a;--bad:#ff8a80;--badbg:#3a1f20;--shadow:0 8px 24px rgba(0,0,0,.15)}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
-h1{font:700 1.5rem Georgia,serif;margin:8px 0 18px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:12px}
-button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(100% - 32px,1000px);margin:0 auto;padding:clamp(24px,5vw,56px) 0 64px}
+h1,h2,p{margin-top:0}
+h1{font:700 clamp(1.8rem,4vw,2.5rem)/1.2 Georgia,serif;letter-spacing:-.025em;margin-bottom:10px}
+h2{font-size:1.2rem;line-height:1.35;margin-bottom:6px}
+.intro{color:var(--mute);margin:0 0 30px;max-width:640px}
+.section-heading{margin:30px 0 14px}
+.section-heading p{color:var(--mute);margin:0;font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.chapter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
+.chapter-card{display:flex;min-width:0;flex-direction:column;gap:16px;justify-content:space-between;transition:transform .16s ease,border-color .16s ease}
+.chapter-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.chapter-card strong{display:block;font-size:1.05rem;line-height:1.4;margin-bottom:8px}
+.chapter-meta{display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--mute);font-size:.9rem}
+button{min-height:44px;font:inherit;font-weight:600;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;transition:background-color .15s ease,border-color .15s ease,transform .15s ease}
+button:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover:not(:disabled){filter:brightness(1.08)}
 button:disabled{opacity:.5;cursor:not-allowed}
-button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.mute{color:var(--mute);font-size:.9rem}
-.opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px}
+.mute{color:var(--mute);font-size:.92rem}
+.toolbar{margin-top:34px;padding:20px 0 0;border-top:1px solid var(--line)}
+.toolbar-title{font-weight:700;color:var(--ink);margin-bottom:12px}
+.toolbar-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.toolbar label{display:inline-flex;align-items:center;gap:8px;min-height:32px;cursor:pointer}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.quiz-header{display:grid;gap:14px;margin-bottom:18px}
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--mute);font-size:.95rem}
+.timer{padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .2s ease}
+.question-card{padding:clamp(18px,4vw,30px)}
+.question-card h2{font-size:clamp(1.15rem,2.5vw,1.45rem);line-height:1.5;margin:0 0 22px}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;min-height:52px;text-align:left;margin:10px 0;padding:13px 15px;border-radius:12px;font-weight:500;line-height:1.5}
+.opt-letter{flex:0 0 27px;height:27px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;font-size:.85rem;font-weight:700;color:var(--mute)}
+.opt-text{padding-top:1px}
 .opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt.ok .opt-letter{border-color:var(--ok);color:var(--ok)}
 .opt.bad{border-color:var(--bad);background:var(--badbg)}
-.opt.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.expl{margin-top:12px;padding:12px 14px;border-left:4px solid var(--ok);background:var(--okbg);border-radius:4px}
+.opt.bad .opt-letter{border-color:var(--bad);color:var(--bad)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt.sel .opt-letter{border-color:var(--accent);color:var(--accent)}
+.expl{margin-top:16px;padding:14px 16px;border-left:4px solid var(--ok);background:var(--okbg);border-radius:8px}
 .expl.bad{border-color:var(--bad);background:var(--badbg)}
-.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:14px}
-.bar i{display:block;height:100%;background:var(--accent)}
-.score{font:700 3rem Georgia,serif}
-.toolbar{margin-top:24px;padding-top:14px;border-top:1px solid var(--line)}
-.toolbar label{display:inline-block}
+.quiz-actions{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.score{font:700 clamp(2.8rem,10vw,4rem)/1 Georgia,serif;color:var(--accent)}
+.result-summary{display:grid;gap:16px}
+.result-review{margin-top:30px}
+.review-card{margin:12px 0}
+.review-card p{font-weight:600}
+@media(max-width:600px){main{width:min(100% - 24px,1000px);padding-top:28px}.chapter-grid{grid-template-columns:1fr;gap:10px}.chapter-card{padding:17px}.chapter-card .primary{width:100%}.quiz-meta{align-items:flex-start}.quiz-actions{align-items:stretch}.quiz-actions button{flex:1}.toolbar-actions{flex-direction:column}.toolbar-actions button{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -51,18 +83,26 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 
   function home(){
     clearInterval(timer);
-    const items = D.chapters.map(c => {
+    const renderChapters = chapters => chapters.map(c => {
       const n = D.questions.filter(q => q.chapter === c.id).length;
-      const b = best[c.id] != null ? ' · Best: ' + best[c.id] + '%' : '';
-      return `<div class="card row"><div><strong>${esc(c.name)}</strong><div class="mute">${n} questions${c.timed ? ' · ' + D.mockMinutes + ' min timer' : ''}${b}</div></div>
-        <button class="primary" data-start="${esc(c.id)}" ${n ? '' : 'disabled'}>Start</button></div>`;
+      const bestScore = best[c.id] != null ? `<span>Best score: ${best[c.id]}%</span>` : '';
+      const timerInfo = c.timed ? `<span>${D.mockMinutes} min timed</span>` : '';
+      return `<article class="card chapter-card"><div><strong>${esc(c.name)}</strong><div class="chapter-meta"><span>${n} questions</span>${timerInfo}${bestScore}</div></div>
+        <button class="primary" data-start="${esc(c.id)}" ${n ? '' : 'disabled'}>${c.timed ? 'Start practice test' : 'Start chapter'}</button></article>`;
     }).join('');
-    app.innerHTML = `<h1>${esc(D.title)}</h1>${items}
-      <div class="toolbar mute">
-        <label><input type="checkbox" id="shuf" checked> Shuffle questions</label><br><br>
-        <button id="imp">Import questions (JSON)</button>
-        <button id="exp">Export questions (JSON)</button>
-        <button id="rst">Reset to questions.js</button>
+    const chapters = D.chapters.filter(c => !c.timed);
+    const practiceSets = D.chapters.filter(c => c.timed);
+    app.innerHTML = `<header><h1>${esc(D.title)}</h1><p class="intro">Build confidence chapter by chapter, or take a timed mock test. Your best score is saved on this device.</p></header>
+      <section aria-labelledby="chapters-heading"><div class="section-heading"><h2 id="chapters-heading">Practice by chapter</h2><p>Learn and review one topic at a time.</p></div><div class="chapter-grid">${renderChapters(chapters)}</div></section>
+      <section aria-labelledby="mock-tests-heading"><div class="section-heading"><h2 id="mock-tests-heading">Full mock tests</h2><p>Timed practice with ${D.mockMinutes} minutes per test.</p></div><div class="chapter-grid">${renderChapters(practiceSets)}</div></section>
+      <div class="toolbar">
+        <div class="toolbar-title">Preferences and question data</div>
+        <label><input type="checkbox" id="shuf" checked> Shuffle questions</label>
+        <div class="toolbar-actions">
+          <button id="imp">Import questions (JSON)</button>
+          <button id="exp">Export questions (JSON)</button>
+          <button id="rst">Reset to questions.js</button>
+        </div>
         <input type="file" id="file" accept=".json" hidden>
       </div>`;
     app.querySelectorAll('[data-start]').forEach(b => b.onclick = () => start(b.dataset.start, document.getElementById('shuf').checked));
@@ -98,16 +138,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
       let cls = 'opt';
       if (st.done) { if (k === q.answer) cls += ' ok'; else if (k === st.sel) cls += ' bad'; }
       else if (k === st.sel) cls += ' sel';
-      return `<button class="${cls}" data-k="${k}" ${st.done ? 'disabled' : ''}>${L[k]}. ${esc(o)}</button>`;
+      return `<button class="${cls}" data-k="${k}" ${st.done ? 'disabled' : ''} aria-pressed="${st.sel === k}"><span class="opt-letter">${L[k]}</span><span class="opt-text">${esc(o)}</span></button>`;
     }).join('');
     const good = st.sel === q.answer;
     const expl = st.done ? `<div class="expl ${good ? '' : 'bad'}"><strong>${good ? 'Correct.' : 'Incorrect. Correct answer: ' + L[q.answer] + '.'}</strong>${q.explanation ? '<br>' + esc(q.explanation) : ''}</div>` : '';
     const last = st.i === st.qs.length - 1;
-    app.innerHTML = `<div class="row mute"><span>${esc(st.ch.name)} · Question ${st.i + 1} of ${st.qs.length}</span>${st.left != null ? `<span>Time left: <strong id="t">${fmt(st.left)}</strong></span>` : ''}</div>
-      <div class="bar"><i style="width:${(st.i / st.qs.length) * 100}%"></i></div>
-      <div class="card"><p><strong>${esc(q.q)}</strong></p>${opts}${expl}
-      <div class="row" style="margin-top:14px"><button id="quit">Exit test</button>
-      ${st.done ? `<button class="primary" id="next">${last ? 'See result' : 'Next question'}</button>` : `<button class="primary" id="sub" ${st.sel == null ? 'disabled' : ''}>Submit answer</button>`}</div></div>`;
+    const progress = Math.round(((st.i + 1) / st.qs.length) * 100);
+    app.innerHTML = `<div class="quiz-header"><div class="quiz-meta"><span>${esc(st.ch.name)} · Question ${st.i + 1} of ${st.qs.length}</span>${st.left != null ? `<span class="timer">Time left: <strong id="t">${fmt(st.left)}</strong></span>` : ''}</div>
+      <div class="bar" role="progressbar" aria-label="Question progress" aria-valuemin="1" aria-valuemax="${st.qs.length}" aria-valuenow="${st.i + 1}"><i style="width:${progress}%"></i></div></div>
+      <section class="card question-card" aria-labelledby="question-title"><h2 id="question-title">${esc(q.q)}</h2>${opts}${expl}
+      <div class="row quiz-actions"><button id="quit">Exit test</button>
+      ${st.done ? `<button class="primary" id="next">${last ? 'See result' : 'Next question'}</button>` : `<button class="primary" id="sub" ${st.sel == null ? 'disabled' : ''}>Submit answer</button>`}</div></section>`;
     app.querySelectorAll('.opt').forEach(b => b.onclick = () => { if (!st.done) { st.sel = +b.dataset.k; show(); } });
     document.getElementById('quit').onclick = () => { if (confirm('Exit this test? Your progress will be lost.')) home(); };
     const sub = document.getElementById('sub');
@@ -120,11 +161,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
     clearInterval(timer);
     const total = st.qs.length, pct = Math.round((st.right / total) * 100), L = ['A','B','C','D','E','F'];
     saveBest(st.ch.id, pct);
-    const rev = st.wrong.map(w => `<div class="card"><p><strong>${esc(w.q.q)}</strong></p>
+    const rev = st.wrong.map(w => `<article class="card review-card"><p>${esc(w.q.q)}</p>
       <div class="mute">Your answer: ${w.sel == null ? 'Not answered' : L[w.sel] + '. ' + esc(w.q.options[w.sel])}</div>
-      <div>Correct: ${L[w.q.answer]}. ${esc(w.q.options[w.q.answer])}</div><div class="mute">${esc(w.q.explanation || '')}</div></div>`).join('');
-    app.innerHTML = `<h1>Result</h1><div class="card"><div class="score">${pct}%</div><p>${st.right} correct out of ${total} in ${esc(st.ch.name)}.</p>
-      <button class="primary" id="home">Back to chapters</button></div>${st.wrong.length ? '<h2>Review wrong answers</h2>' + rev : ''}`;
+      <div>Correct: ${L[w.q.answer]}. ${esc(w.q.options[w.q.answer])}</div><div class="mute">${esc(w.q.explanation || '')}</div></article>`).join('');
+    app.innerHTML = `<h1>Test complete</h1><section class="card result-summary"><div><div class="score">${pct}%</div><p>${st.right} correct out of ${total} in ${esc(st.ch.name)}.</p></div>
+      <button class="primary" id="home">Back to practice</button></section>${st.wrong.length ? '<section class="result-review"><h2>Review answers to revisit</h2>' + rev + '</section>' : '<p class="intro">Perfect score! You got every question right.</p>'}`;
     document.getElementById('home').onclick = home;
   }
 
