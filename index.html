@@ -36,7 +36,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .toolbar label{display:inline-flex;align-items:center;gap:8px;min-height:32px;cursor:pointer}
 input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
 .quiz-header{display:grid;gap:14px;margin-bottom:18px}
+.quiz-topline{display:flex;justify-content:flex-end}
 .quiz-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--mute);font-size:.95rem}
+.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.danger:hover:not(:disabled){background:var(--bad);border-color:var(--bad);filter:brightness(1.08)}
 .timer{padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font-variant-numeric:tabular-nums}
 .bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .2s ease}
@@ -55,16 +58,36 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
 .expl.bad{border-color:var(--bad);background:var(--badbg)}
 .quiz-actions{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
 .score{font:700 clamp(2.8rem,10vw,4rem)/1 Georgia,serif;color:var(--accent)}
-.result-summary{display:grid;gap:16px}
+.result-summary{display:grid;gap:18px}
+.result-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.result-stat{padding:12px;border:1px solid var(--line);border-radius:12px}
+.result-stat strong{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.result-stat span{color:var(--mute);font-size:.85rem}
 .result-review{margin-top:30px}
 .review-card{margin:12px 0}
 .review-card p{font-weight:600}
-@media(max-width:600px){main{width:min(100% - 24px,1000px);padding-top:28px}.chapter-grid{grid-template-columns:1fr;gap:10px}.chapter-card{padding:17px}.chapter-card .primary{width:100%}.quiz-meta{align-items:flex-start}.quiz-actions{align-items:stretch}.quiz-actions button{flex:1}.toolbar-actions{flex-direction:column}.toolbar-actions button{width:100%}}
+.submit-dialog{width:min(100% - 32px,440px);padding:0;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);box-shadow:0 24px 80px rgba(0,0,0,.28)}
+.submit-dialog::backdrop{background:rgba(12,18,30,.58);backdrop-filter:blur(3px)}
+.dialog-content{padding:24px}
+.dialog-content h2{font-size:1.35rem;margin:0 0 8px}
+.dialog-content p{color:var(--mute);margin:0}
+.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+@media(max-width:600px){main{width:min(100% - 24px,1000px);padding-top:28px}.chapter-grid{grid-template-columns:1fr;gap:10px}.chapter-card{padding:17px}.chapter-card .primary{width:100%}.quiz-meta{align-items:flex-start}.quiz-actions{align-items:stretch}.quiz-actions button{flex:1}.toolbar-actions{flex-direction:column}.toolbar-actions button{width:100%}.result-stats{gap:7px}.result-stat{padding:10px 8px}.result-stat span{font-size:.78rem}.dialog-content{padding:20px}.dialog-actions button{flex:1}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
 <body>
 <main id="app"></main>
+<dialog class="submit-dialog" id="submit-dialog" aria-labelledby="submit-dialog-title" aria-describedby="submit-dialog-message">
+  <div class="dialog-content">
+    <h2 id="submit-dialog-title">Submit this test?</h2>
+    <p id="submit-dialog-message"></p>
+    <div class="dialog-actions">
+      <button id="cancel-submit" autofocus>Keep working</button>
+      <button class="danger" id="confirm-submit">Submit test</button>
+    </div>
+  </div>
+</dialog>
 <script src="questions.js"></script>
 <script>
 (function(){
@@ -127,7 +150,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
     if (doShuffle) qs = shuffle(qs);
     st = { ch, qs, i: 0, sel: null, done: false, right: 0, wrong: [], left: ch.timed ? D.mockMinutes * 60 : null };
     clearInterval(timer);
-    if (st.left) timer = setInterval(() => { st.left--; const t = document.getElementById('t'); if (t) t.textContent = fmt(st.left); if (st.left <= 0) result(); }, 1000);
+    if (st.left) timer = setInterval(() => { st.left--; const t = document.getElementById('t'); if (t) t.textContent = fmt(st.left); if (st.left <= 0) finishTest(); }, 1000);
     show();
   }
   const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
@@ -144,7 +167,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
     const expl = st.done ? `<div class="expl ${good ? '' : 'bad'}"><strong>${good ? 'Correct.' : 'Incorrect. Correct answer: ' + L[q.answer] + '.'}</strong>${q.explanation ? '<br>' + esc(q.explanation) : ''}</div>` : '';
     const last = st.i === st.qs.length - 1;
     const progress = Math.round(((st.i + 1) / st.qs.length) * 100);
-    app.innerHTML = `<div class="quiz-header"><div class="quiz-meta"><span>${esc(st.ch.name)} · Question ${st.i + 1} of ${st.qs.length}</span>${st.left != null ? `<span class="timer">Time left: <strong id="t">${fmt(st.left)}</strong></span>` : ''}</div>
+    app.innerHTML = `<div class="quiz-header"><div class="quiz-topline"><button class="danger" id="finish">Submit test</button></div>
+      <div class="quiz-meta"><span>${esc(st.ch.name)} · Question ${st.i + 1} of ${st.qs.length}</span>${st.left != null ? `<span class="timer">Time left: <strong id="t">${fmt(st.left)}</strong></span>` : ''}</div>
       <div class="bar" role="progressbar" aria-label="Question progress" aria-valuemin="1" aria-valuemax="${st.qs.length}" aria-valuenow="${st.i + 1}"><i style="width:${progress}%"></i></div></div>
       <section class="card question-card" aria-labelledby="question-title"><h2 id="question-title">${esc(q.q)}</h2>${opts}${expl}
       <div class="row quiz-actions"><button id="quit">Exit test</button>
@@ -153,19 +177,49 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
     document.getElementById('quit').onclick = () => { if (confirm('Exit this test? Your progress will be lost.')) home(); };
     const sub = document.getElementById('sub');
     if (sub) sub.onclick = () => { st.done = true; if (st.sel === q.answer) st.right++; else st.wrong.push({ q, sel: st.sel }); show(); };
+    document.getElementById('finish').onclick = () => {
+      const answered = st.done ? st.i + 1 : st.i + (st.sel != null ? 1 : 0);
+      const unanswered = st.qs.length - answered;
+      if (!unanswered) {
+        finishTest();
+        return;
+      }
+      const dialog = document.getElementById('submit-dialog');
+      document.getElementById('submit-dialog-message').textContent = `${unanswered} question${unanswered === 1 ? ' will' : 's will'} remain unanswered and won't count toward your score.`;
+      dialog.showModal();
+      document.getElementById('cancel-submit').onclick = () => dialog.close();
+      document.getElementById('confirm-submit').onclick = () => { dialog.close(); finishTest(); };
+    };
     const nx = document.getElementById('next');
-    if (nx) nx.onclick = () => { if (last) result(); else { st.i++; st.sel = null; st.done = false; show(); } };
+    if (nx) nx.onclick = () => { if (last) finishTest(); else { st.i++; st.sel = null; st.done = false; show(); } };
+  }
+
+  function finishTest(){
+    if (!st) return;
+    const dialog = document.getElementById('submit-dialog');
+    if (dialog.open) dialog.close();
+    if (!st.done) {
+      const q = st.qs[st.i];
+      if (st.sel == null) st.unanswered = 1;
+      else if (st.sel === q.answer) st.right++;
+      else st.wrong.push({ q, sel: st.sel });
+    }
+    st.unanswered = (st.unanswered || 0) + st.qs.length - st.right - st.wrong.length - (st.unanswered || 0);
+    result();
   }
 
   function result(){
     clearInterval(timer);
-    const total = st.qs.length, pct = Math.round((st.right / total) * 100), L = ['A','B','C','D','E','F'];
-    saveBest(st.ch.id, pct);
+    const total = st.qs.length, attempted = st.right + st.wrong.length;
+    const pct = attempted ? Math.round((st.right / attempted) * 100) : null, L = ['A','B','C','D','E','F'];
+    if (pct != null) saveBest(st.ch.id, pct);
     const rev = st.wrong.map(w => `<article class="card review-card"><p>${esc(w.q.q)}</p>
       <div class="mute">Your answer: ${w.sel == null ? 'Not answered' : L[w.sel] + '. ' + esc(w.q.options[w.sel])}</div>
       <div>Correct: ${L[w.q.answer]}. ${esc(w.q.options[w.q.answer])}</div><div class="mute">${esc(w.q.explanation || '')}</div></article>`).join('');
-    app.innerHTML = `<h1>Test complete</h1><section class="card result-summary"><div><div class="score">${pct}%</div><p>${st.right} correct out of ${total} in ${esc(st.ch.name)}.</p></div>
-      <button class="primary" id="home">Back to practice</button></section>${st.wrong.length ? '<section class="result-review"><h2>Review answers to revisit</h2>' + rev + '</section>' : '<p class="intro">Perfect score! You got every question right.</p>'}`;
+    app.innerHTML = `<h1>Test result</h1><section class="card result-summary"><div class="row"><div><div class="score">${pct == null ? '—' : pct + '%'}</div><p>${esc(st.ch.name)} · ${attempted} of ${total} answered</p></div>
+      <button class="primary" id="home">Back to practice</button></div>
+      <div class="result-stats"><div class="result-stat"><strong>${st.right}</strong><span>Correct</span></div><div class="result-stat"><strong>${st.wrong.length}</strong><span>Incorrect</span></div><div class="result-stat"><strong>${st.unanswered || 0}</strong><span>Unanswered</span></div></div></section>
+      ${st.wrong.length ? '<section class="result-review"><h2>Review incorrect answers</h2>' + rev + '</section>' : attempted ? '<p class="intro">No incorrect answers. Well done!</p>' : '<p class="intro">No questions were answered, so there is no score yet.</p>'}`;
     document.getElementById('home').onclick = home;
   }
 
