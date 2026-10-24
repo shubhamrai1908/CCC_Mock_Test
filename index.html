@@ -100,12 +100,19 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
   try { best = JSON.parse(localStorage.getItem(KEY + '_best')) || {}; } catch(e){}
   let st = null, timer = null;
 
+  window.addEventListener('beforeunload', e => {
+    if (!st) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const saveBest = (id, pct) => { if (!(best[id] >= pct)) best[id] = pct; try { localStorage.setItem(KEY + '_best', JSON.stringify(best)); } catch(e){} };
 
   function home(){
     clearInterval(timer);
+    st = null;
     const renderChapters = chapters => chapters.map(c => {
       const n = D.questions.filter(q => q.chapter === c.id).length;
       const bestScore = best[c.id] != null ? `<span>Best score: ${best[c.id]}%</span>` : '';
@@ -220,6 +227,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
       <button class="primary" id="home">Back to practice</button></div>
       <div class="result-stats"><div class="result-stat"><strong>${st.right}</strong><span>Correct</span></div><div class="result-stat"><strong>${st.wrong.length}</strong><span>Incorrect</span></div><div class="result-stat"><strong>${st.unanswered || 0}</strong><span>Unanswered</span></div></div></section>
       ${st.wrong.length ? '<section class="result-review"><h2>Review incorrect answers</h2>' + rev + '</section>' : attempted ? '<p class="intro">No incorrect answers. Well done!</p>' : '<p class="intro">No questions were answered, so there is no score yet.</p>'}`;
+    st = null;
     document.getElementById('home').onclick = home;
   }
 
